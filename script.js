@@ -18,6 +18,53 @@ const speciesProfiles = [
   { name: "Agaricus", latin: "Agaricus species", season: "Summer through fall, often after rain", elevation: "Broad range", aspect: "Moist shaded sites can help, but habitat matters more", habitat: "Grass, woodland edge, and disturbed ground depending on species", soil: "Often humus-rich grassland or forest-edge soil", temperature: "Mild, moist weather", moisture: "Rain followed by several mild days", warning: "This genus includes edible and poisonous species. Yellow-staining and phenol odors are red flags, but expert ID is essential." }
 ];
 
+<<<<<<< HEAD
+=======
+const safeStorage = {
+  get(key, fallback = null) {
+    try {
+      const value = localStorage.getItem(key);
+      return value == null ? fallback : JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function setStatus(message, isError = false) {
+  const status = document.querySelector("#map-status");
+  if (status) {
+    status.textContent = message;
+    status.style.color = isError ? "#723e34" : "";
+  }
+}
+
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
 const map = L.map("map", { zoomControl: false }).setView([37.64, -108.12], 8);
 L.control.zoom({ position: "bottomright" }).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap contributors" }).addTo(map);
@@ -93,8 +140,12 @@ renderBestSpots();
 
 async function loadSightings() {
   if (sightingsLoaded) { map.addLayer(sightingsLayer); return; }
+<<<<<<< HEAD
   const status = document.querySelector("#map-status");
   status.textContent = "Loading recent public fungus observations…";
+=======
+  setStatus("Loading recent public fungus observations…");
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
   try {
     const end = new Date().toISOString().slice(0, 10);
     const start = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -102,15 +153,28 @@ async function loadSightings() {
     const response = await fetch(url);
     if (!response.ok) throw new Error("Sightings unavailable");
     const data = await response.json();
+<<<<<<< HEAD
     data.results.filter(item => item.geojson?.coordinates).forEach(item => {
+=======
+    const results = Array.isArray(data.results) ? data.results : [];
+    results.filter(item => item.geojson?.coordinates).forEach(item => {
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
       const [lng, lat] = item.geojson.coordinates;
       const title = item.taxon?.preferred_common_name || item.species_guess || "Fungus observation";
       const marker = L.circleMarker([lat, lng], { radius: 5, color: "#6b3a72", fillColor: "#a96ab1", fillOpacity: .8, weight: 1 });
       marker.bindPopup(`<h3 class="popup-title">${title}</h3><p class="popup-copy">Observed ${item.observed_on_string || "date not listed"}<br><a href="https://www.inaturalist.org/observations/${item.id}" target="_blank" rel="noopener">View public observation</a></p>`);
       sightingsLayer.addLayer(marker);
     });
+<<<<<<< HEAD
     sightingsLoaded = true; map.addLayer(sightingsLayer); status.textContent = "Recent public sightings shown in purple.";
   } catch { status.textContent = "Public sightings are temporarily unavailable."; }
+=======
+    sightingsLoaded = true; map.addLayer(sightingsLayer); setStatus("Recent public sightings shown in purple.");
+  } catch (error) {
+    console.warn("Sightings load failed", error);
+    setStatus("Public sightings are temporarily unavailable. The map remains usable.");
+  }
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
 }
 
 document.querySelectorAll(".map-tools button").forEach(button => button.addEventListener("click", () => {
@@ -157,16 +221,30 @@ safetyItems.forEach(item => item.addEventListener("change", updateSafetyState));
 updateSafetyState();
 
 const journalKey = "mushroom-radar-journal";
+<<<<<<< HEAD
 function getJournal() { try { return JSON.parse(localStorage.getItem(journalKey)) || []; } catch { return []; } }
 function renderJournal() {
   const entries = getJournal();
   document.querySelector("#journal-list").innerHTML = entries.slice(0, 8).map(entry => `<div class="journal-entry"><strong>${entry.species} · ${entry.place}</strong>${entry.notes || "No notes"}<br><small>${entry.date}</small></div>`).join("") || "<p class=\"search-result\">No private notes yet. Your notes stay in this browser.</p>";
+=======
+function getJournal() { return safeStorage.get(journalKey, []); }
+function renderJournal() {
+  const entries = getJournal();
+  document.querySelector("#journal-list").innerHTML = entries.slice(0, 8).map(entry => `<div class="journal-entry"><strong>${escapeHtml(entry.species || "Untitled note")} · ${escapeHtml(entry.place || "Unknown place")}</strong>${escapeHtml(entry.notes || "No notes")}<br><small>${escapeHtml(entry.date || "")}</small></div>`).join("") || "<p class=\"search-result\">No private notes yet. Your notes stay in this browser.</p>";
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
 }
 document.querySelector("#find-form").addEventListener("submit", event => {
   event.preventDefault();
   const entries = getJournal();
   entries.unshift({ species: document.querySelector("#find-species").value.trim(), place: document.querySelector("#find-place").value.trim(), notes: document.querySelector("#find-notes").value.trim(), spore: document.querySelector("#find-spore").value.trim(), bruising: document.querySelector("#find-bruising").value.trim(), odor: document.querySelector("#find-odor").value.trim(), texture: document.querySelector("#find-texture").value.trim(), date: new Date().toLocaleDateString() });
+<<<<<<< HEAD
   localStorage.setItem(journalKey, JSON.stringify(entries.slice(0, 50)));
+=======
+  if (!safeStorage.set(journalKey, entries.slice(0, 50))) {
+    document.querySelector("#journal-list").innerHTML = "<p class=\"search-result\">Storage is unavailable in this browser, so your note could not be saved.</p>";
+    return;
+  }
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
   event.target.reset(); renderJournal();
 });
 renderJournal();
@@ -196,12 +274,23 @@ document.querySelector("#mushroom-photo").addEventListener("change", event => {
 
 const alertSelect = document.querySelector("#alert-species");
 speciesProfiles.forEach(profile => alertSelect.insertAdjacentHTML("beforeend", `<option>${profile.name}</option>`));
+<<<<<<< HEAD
 const savedAlert = JSON.parse(localStorage.getItem("mushroom-radar-alert") || "null");
+=======
+const savedAlert = safeStorage.get("mushroom-radar-alert", null);
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
 if (savedAlert) { alertSelect.value = savedAlert.species; document.querySelector("#alert-threshold").value = savedAlert.threshold; document.querySelector("#alert-status").textContent = `${savedAlert.species} reminder saved for ${savedAlert.threshold}% activity.`; }
 document.querySelector("#alert-form").addEventListener("submit", async event => {
   event.preventDefault();
   const alert = { species: alertSelect.value, threshold: Number(document.querySelector("#alert-threshold").value) };
+<<<<<<< HEAD
   localStorage.setItem("mushroom-radar-alert", JSON.stringify(alert));
+=======
+  if (!safeStorage.set("mushroom-radar-alert", alert)) {
+    document.querySelector("#alert-status").textContent = "This browser blocked reminder storage. You can still continue using the app without alerts.";
+    return;
+  }
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
   if ("Notification" in window && Notification.permission === "default") await Notification.requestPermission();
   document.querySelector("#alert-status").textContent = `${alert.species} reminder saved for ${alert.threshold}% activity in this browser.`;
 });
@@ -239,6 +328,14 @@ async function loadWeather() {
   const stationList = document.querySelector("#weather-stations");
   const refresh = document.querySelector("#refresh-weather");
   refresh.disabled = true;
+<<<<<<< HEAD
+=======
+  if (!navigator.onLine) {
+    status.textContent = "You’re offline right now, so live weather data is unavailable. The sample forecast remains visible.";
+    refresh.disabled = false;
+    return;
+  }
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
   status.textContent = "Finding all NOAA/NWS stations linked to the six forecast areas…";
   stationList.innerHTML = "";
   try {
@@ -298,6 +395,10 @@ async function loadWeather() {
     if (reportingStations.length > 10) stationList.insertAdjacentHTML("beforeend", `<p class="weather-status">Showing 10 of ${reportingStations.length} reporting stations; all were included in the score.</p>`);
     status.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Covers the previous 7 days; station reports can be delayed.`;
   } catch (error) {
+<<<<<<< HEAD
+=======
+    console.warn("Weather load failed", error);
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
     status.textContent = "Live station data is temporarily unavailable. The map is still showing its sample forecast.";
   } finally { refresh.disabled = false; }
 }
@@ -305,4 +406,12 @@ async function loadWeather() {
 document.querySelector("#refresh-weather").addEventListener("click", loadWeather);
 loadWeather();
 
+<<<<<<< HEAD
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+=======
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("Service worker registration failed", error));
+  });
+}
+>>>>>>> 68e6d84 (Update Mushroom Radar app)

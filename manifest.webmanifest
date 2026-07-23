@@ -1,7 +1,13 @@
 {
   "name": "Mushroom Radar",
   "short_name": "Mushroom Radar",
+<<<<<<< HEAD
   "start_url": "./",
+=======
+  "description": "A privacy-focused mushroom forecasting and field-journal prototype for Southwest Colorado.",
+  "start_url": "./",
+  "scope": "./",
+>>>>>>> 68e6d84 (Update Mushroom Radar app)
   "display": "standalone",
   "background_color": "#f7f4ed",
   "theme_color": "#10261f"
