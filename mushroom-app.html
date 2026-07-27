@@ -41,94 +41,124 @@
     }
 
     .map-toolbar {
-      background: white;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.96);
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.08);
+      border-radius: 22px;
       z-index: 400;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(26, 71, 42, 0.08);
     }
 
     .search-box {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
     }
 
     .search-box input {
       flex: 1;
-      padding: 12px 16px;
-      border: 2px solid var(--light);
-      border-radius: 50px;
+      padding: 14px 18px;
+      border: 1px solid #d8dce0;
+      border-radius: 14px;
       font-size: 15px;
-      background: var(--light);
-      transition: all 0.2s;
+      background: white;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+      transition: all 0.2s ease;
     }
 
     .search-box input:focus {
       outline: none;
       border-color: var(--primary);
-      background: white;
+      box-shadow: 0 0 0 4px rgba(26, 71, 42, 0.08);
+    }
+
+    .search-btn {
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 96px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(26, 71, 42, 0.16);
     }
 
     .filters-row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .filter-btn {
-      padding: 8px 16px;
-      border: 2px solid #ddd;
-      border-radius: 50px;
+      padding: 10px 16px;
+      border: 1px solid #d8dce0;
+      border-radius: 999px;
       background: white;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
-      transition: all 0.2s;
+      color: #4a5a6a;
+      transition: all 0.2s ease;
       white-space: nowrap;
+      box-shadow: inset 0 0 0 rgba(0,0,0,0.04);
     }
 
     .filter-btn:hover {
       border-color: var(--primary);
       color: var(--primary);
+      box-shadow: inset 0 0 0 1px rgba(26, 71, 42, 0.06);
     }
 
     .filter-btn.active {
       background: var(--primary);
       color: white;
       border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(26, 71, 42, 0.12);
     }
 
     #map {
       flex: 1;
       width: 100%;
-      min-height: 500px;
+      min-height: 520px;
       background: #e8f0e8;
+      border-radius: 22px;
+      overflow: hidden;
     }
 
     .sidebar {
       display: flex;
       flex-direction: column;
-      background: white;
-      border-left: 1px solid #ddd;
+      background: #f7faf7;
+      border-left: 1px solid #e1e8ed;
       overflow: hidden;
+      box-shadow: -12px 0 38px rgba(0,0,0,0.05);
     }
 
     .sidebar-header {
-      background: var(--primary);
+      background: #1f553b;
       color: white;
-      padding: 16px;
+      padding: 20px 18px;
       text-align: center;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      font-size: 1.05rem;
     }
 
     .sidebar-tabs {
       display: flex;
       gap: 0;
-      border-bottom: 1px solid #ddd;
-      background: var(--light);
+      border-bottom: 1px solid #e1e8ed;
+      background: transparent;
       padding: 0 8px;
     }
 
@@ -136,35 +166,35 @@
       flex: 1;
       border: none;
       background: transparent;
-      padding: 12px;
+      padding: 14px 10px;
       cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      color: #5d6e7f;
       border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
     .sidebar-tabs button.active {
       color: var(--primary);
       border-bottom-color: var(--primary);
-      background: white;
+      background: rgba(26, 71, 42, 0.04);
     }
 
     .sidebar-content {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 18px;
     }
 
     .mushroom-card {
       background: white;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
+      border: 1px solid #e4e8ed;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       display: none;
     }
 
@@ -173,9 +203,9 @@
     }
 
     .mushroom-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.08);
       transform: translateY(-2px);
-      border-color: var(--primary);
+      border-color: rgba(26, 71, 42, 0.2);
     }
 
     .mushroom-name {
@@ -199,11 +229,12 @@
     }
 
     .weather-card {
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
+      background: #ffffff;
+      border: 1px solid #edf2f4;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 12px 24px rgba(18, 37, 44, 0.04);
     }
 
     .weather-row {
@@ -213,21 +244,22 @@
       align-items: center;
       margin-bottom: 10px;
       font-size: 13px;
-      color: var(--dark);
+      color: #243142;
     }
 
     .weather-row strong {
-      color: var(--primary);
+      color: #16432f;
     }
 
     .weather-status {
       display: inline-flex;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 700;
       color: white;
       background: var(--primary);
+      box-shadow: 0 8px 20px rgba(26, 71, 42, 0.18);
     }
 
     .badges {
@@ -245,11 +277,32 @@
     .mushroom-image-row img {
       width: 100%;
       max-width: 140px;
-      height: 96px;
-      border-radius: 12px;
+      height: 100px;
+      border-radius: 16px;
       object-fit: cover;
-      border: 1px solid #ddd;
+      border: 1px solid #e2e8ed;
       background: #fff;
+    }
+
+    .mushroom-name {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 5px;
+      color: #1f3f2e;
+    }
+
+    .mushroom-latin {
+      font-size: 12px;
+      color: #6b7a86;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .mushroom-info {
+      font-size: 13px;
+      color: #4a5a6a;
+      margin-bottom: 8px;
+      line-height: 1.55;
     }
 
     .badge {
@@ -309,26 +362,29 @@
       z-index: 300;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      align-items: stretch;
     }
 
     .map-controls button {
-      width: 44px;
-      height: 44px;
+      width: 56px;
+      height: 56px;
       border: none;
       background: white;
-      border-radius: 8px;
+      border-radius: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: all 0.2s;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .map-controls button:hover {
-      background: var(--light);
+      transform: translateY(-2px);
+      box-shadow: 0 22px 46px rgba(0,0,0,0.16);
+      background: #f6fbf7;
     }
 
     .no-results {
@@ -373,10 +429,10 @@
           <input 
             type="text" 
             id="search-input" 
-            placeholder="🔍 Search mushroom species..."
+            placeholder="Search mushroom species..."
             autocomplete="off"
           >
-          <button style="background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600;">🔎</button>
+          <button class="search-btn">Search</button>
         </div>
         <div class="filters-row">
           <button class="filter-btn active" data-filter="all">All Species</button>
@@ -474,6 +530,25 @@
       { species: "Hedgehog", lat: 37.242, lng: -108.489, user: "Chris M.", date: "2026-07-13", quantity: 6 }
     ];
 
+    const DATA_NETWORK_SOURCES = [
+      { name: 'USDA NRCS SNOTEL', category: 'High-Altitude Soil', coords: [39.310, -106.820], url: 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?report=Colorado&format=SNOTEL+Snowpack+Update+Report', description: 'Snow telemetry sites with soil moisture and soil temperature at multiple depths.' },
+      { name: 'USDA NRCS SCAN', category: 'Soil Climate', coords: [39.100, -105.820], url: 'https://www.nrcs.usda.gov/', description: 'Low-elevation soil climate and moisture observations for agricultural valleys.' },
+      { name: 'CoAgMET', category: 'Agricultural Network', coords: [40.570, -105.080], url: 'https://coagmet.colostate.edu/', description: 'Advanced Colorado agricultural meteorological stations with ET and solar intensity reports.' },
+      { name: 'CoCoRaHS', category: 'Citizen Science', coords: [39.740, -105.020], url: 'https://www.cocorahs.org/Content.aspx?page=app-guide-mydata', description: 'Volunteer rain, hail, and snow gauges providing hyper-local precipitation coverage.' },
+      { name: 'NOAA MRMS', category: 'Gridded Weather', coords: [39.000, -105.500], url: 'https://www.nssl.noaa.gov/projects/mrms/', description: 'Multi-radar multi-sensor gridded precipitation fields for Colorado.' },
+      { name: 'PRISM Climate', category: 'Climate Model', coords: [38.800, -104.900], url: 'https://prism.oregonstate.edu/', description: 'High-resolution gridded climate surfaces for temperature and moisture.' },
+      { name: 'NASA SMAP', category: 'Satellite Soil Moisture', coords: [39.600, -105.000], url: 'https://smap.jpl.nasa.gov/', description: 'Soil moisture active passive satellite observations at regional scale.' },
+      { name: 'NOAA HRRR', category: 'Rapid Refresh', coords: [39.000, -105.500], url: 'https://rapidrefresh.noaa.gov/hrrr/', description: 'High-resolution hourly atmospheric model for near-surface humidity and rainfall.' },
+      { name: 'iNaturalist', category: 'Biological Data', coords: [39.200, -105.600], url: 'https://www.inaturalist.org/', description: 'Crowdsourced fungal observations with georeferenced fruiting locations.' },
+      { name: 'Mushroom Observer', category: 'Community Registry', coords: [39.300, -106.000], url: 'https://mushroomobserver.org/', description: 'Community database of mycological observations and substrate notes.' },
+      { name: 'USDA FIA', category: 'Forest Inventory', coords: [39.400, -105.800], url: 'https://research.fs.usda.gov/programs/fia', description: 'Forest inventory data for host tree distributions and forest type mapping.' },
+      { name: 'USGS NLCD', category: 'Land Cover', coords: [40.000, -105.000], url: 'https://www.usgs.gov/centers/eros/science/national-land-cover-database', description: 'National land cover dataset for forest and scrubland classification.' },
+      { name: 'USGS 3DEP', category: 'Topography', coords: [38.900, -106.100], url: 'https://www.usgs.gov/3d-elevation-program', description: 'High-resolution digital elevation models for terrain aspect and slope analysis.' },
+      { name: 'USGS NHD', category: 'Hydrography', coords: [39.500, -105.300], url: 'https://www.usgs.gov/national-hydrography/national-hydrography-dataset', description: 'Hydrography dataset for streams, creeks, and riparian zone mapping.' },
+      { name: 'GeoMAC / WFIGS', category: 'Fire Disturbance', coords: [39.400, -105.900], url: 'https://data-nifc.opendata.arcgis.com/', description: 'Historical fire perimeters and burn scar data to detect pyrophilous mushroom zones.' },
+      { name: 'USDA NRCS SSURGO', category: 'Soil Survey', coords: [39.100, -105.400], url: 'https://www.nrcs.usda.gov/wps/portal/nrcs/site/national/home/', description: 'Soil type, drainage, and organic matter maps for site-level habitat prediction.' }
+    ];
+
     // ============ STATE ============
     let mySpots = JSON.parse(localStorage.getItem('mushroom-spots') || '[]');
     let activeFilter = 'all';
@@ -498,6 +573,8 @@
     const probabilityLayer = L.layerGroup().addTo(map);
     const communitiesLayer = L.layerGroup().addTo(map);
     const mySpotLayer = L.layerGroup().addTo(map);
+    const stationLayer = L.layerGroup().addTo(map);
+    const dataNetworkLayer = L.layerGroup().addTo(map);
 
     const baseMaps = {
       'OpenStreetMap': osmLayer,
@@ -506,7 +583,9 @@
 
     const overlayMaps = {
       'Hillshade': hillshadeLayer,
-      'Mushroom probability': probabilityLayer
+      'Mushroom probability': probabilityLayer,
+      'Weather stations': stationLayer,
+      'Network sources': dataNetworkLayer
     };
 
     osmLayer.addTo(map);
@@ -554,6 +633,8 @@
       list.innerHTML = '';
 
       const filtered = MUSHROOM_SPECIES.filter(s => matchesFilter(s) && matchesSearch(s));
+      document.getElementById('total-species').textContent = filtered.length;
+      document.getElementById('total-finds').textContent = SAMPLE_FINDS.length;
 
       if (filtered.length === 0) {
         list.innerHTML = '<div class="no-results">No species found</div>';
@@ -696,6 +777,61 @@
       });
     }
 
+    async function renderStationLayer(stationUrls) {
+      stationLayer.clearLayers();
+      if (!Array.isArray(stationUrls) || stationUrls.length === 0) return;
+
+      const stationResponses = await Promise.all(stationUrls.slice(0, 12).map(async (url) => {
+        try {
+          const response = await fetch(url, { headers: { 'User-Agent': 'MushroomSpotApp/1.0' } });
+          if (!response.ok) return null;
+          return response.json();
+        } catch (error) {
+          return null;
+        }
+      }));
+
+      stationResponses.filter(Boolean).forEach(station => {
+        const coords = station.geometry?.coordinates;
+        if (!coords || coords.length < 2) return;
+        const [lng, lat] = coords;
+        const name = station.properties?.name || station.properties?.stationIdentifier || 'Weather station';
+        const type = station.properties?.stationType || station.properties?.type || 'NOAA observation station';
+        const id = station.properties?.stationIdentifier || station.properties?.stationId || 'N/A';
+
+        L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: '#1abc9c',
+          color: '#0f3d2e',
+          weight: 1,
+          fillOpacity: 0.9
+        }).addTo(stationLayer).bindPopup(`
+          <strong>${name}</strong><br>
+          ${type}<br>
+          ID: ${id}
+        `);
+      });
+    }
+
+    function renderDataNetworkLayer() {
+      dataNetworkLayer.clearLayers();
+      DATA_NETWORK_SOURCES.forEach(source => {
+        const marker = L.circleMarker(source.coords, {
+          radius: 10,
+          fillColor: source.category.includes('Soil') ? '#8e44ad' : source.category.includes('Gridded') ? '#2980b9' : source.category.includes('Biological') ? '#27ae60' : '#d35400',
+          color: '#222',
+          weight: 1,
+          fillOpacity: 0.85
+        }).addTo(dataNetworkLayer);
+        marker.bindPopup(`
+          <strong>${source.name}</strong><br>
+          <em>${source.category}</em><br>
+          ${source.description}<br>
+          <a href="${source.url}" target="_blank">Source info</a>
+        `);
+      });
+    }
+
     // ============ EVENT LISTENERS ============
     document.getElementById('search-input').addEventListener('input', (e) => {
       searchQuery = e.target.value;
@@ -733,6 +869,21 @@
           document.getElementById('myspots-tab').classList.add('active');
         }
       });
+    });
+
+    document.querySelector('.search-btn').addEventListener('click', () => {
+      searchQuery = document.getElementById('search-input').value;
+      renderSpecies();
+      renderCommunityFinds();
+    });
+
+    document.getElementById('search-input').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        searchQuery = event.target.value;
+        renderSpecies();
+        renderCommunityFinds();
+      }
     });
 
     document.getElementById('add-spot-btn').addEventListener('click', () => {
@@ -789,6 +940,8 @@
 
         const stationData = await stationRes.json();
         const obsData = await forecastRes.json();
+        const stationList = pointData.properties.observationStations || [];
+        renderStationLayer(stationList);
 
         const temp = obsData.properties.temperature?.value;
         const dewpoint = obsData.properties.dewpoint?.value;
@@ -1021,6 +1174,7 @@
     // ============ INIT ============
     renderCommunityFinds();
     renderSpecies();
+    renderDataNetworkLayer();
     updateMapSpots();
   </script>
 </body>
