@@ -1,1 +1,1182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mushroom Spot - Find mushrooms, identify species, track your finds">
+  <meta name="theme-color" content="#1a472a">
+  <title>Mushroom Spot</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --primary: #1a472a;
+      --accent: #d4a574;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --muted: #7f8c8d;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      min-height: 100vh;
+    }
+
+    .map-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-toolbar {
+      background: rgba(255, 255, 255, 0.96);
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.08);
+      border-radius: 22px;
+      z-index: 400;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(26, 71, 42, 0.08);
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 1px solid #d8dce0;
+      border-radius: 14px;
+      font-size: 15px;
+      background: white;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(26, 71, 42, 0.08);
+    }
+
+    .search-btn {
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 96px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(26, 71, 42, 0.16);
+    }
+
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 10px 16px;
+      border: 1px solid #d8dce0;
+      border-radius: 999px;
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a5a6a;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: inset 0 0 0 rgba(0,0,0,0.04);
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px rgba(26, 71, 42, 0.06);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(26, 71, 42, 0.12);
+    }
+
+    #map {
+      flex: 1;
+      width: 100%;
+      min-height: 520px;
+      background: #e8f0e8;
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      background: #f7faf7;
+      border-left: 1px solid #e1e8ed;
+      overflow: hidden;
+      box-shadow: -12px 0 38px rgba(0,0,0,0.05);
+    }
+
+    .sidebar-header {
+      background: #1f553b;
+      color: white;
+      padding: 20px 18px;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      font-size: 1.05rem;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e1e8ed;
+      background: transparent;
+      padding: 0 8px;
+    }
+
+    .sidebar-tabs button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 14px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: #5d6e7f;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-tabs button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(26, 71, 42, 0.04);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+    }
+
+    .mushroom-card {
+      background: white;
+      border: 1px solid #e4e8ed;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: none;
+    }
+
+    .mushroom-card.show {
+      display: block;
+    }
+
+    .mushroom-card:hover {
+      box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+      border-color: rgba(26, 71, 42, 0.2);
+    }
+
+    .mushroom-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .mushroom-latin {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+
+    .mushroom-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .weather-card {
+      background: #ffffff;
+      border: 1px solid #edf2f4;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 12px 24px rgba(18, 37, 44, 0.04);
+    }
+
+    .weather-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #243142;
+    }
+
+    .weather-row strong {
+      color: #16432f;
+    }
+
+    .weather-status {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--primary);
+      box-shadow: 0 8px 20px rgba(26, 71, 42, 0.18);
+    }
+
+    .badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mushroom-image-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .mushroom-image-row img {
+      width: 100%;
+      max-width: 140px;
+      height: 100px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid #e2e8ed;
+      background: #fff;
+    }
+
+    .mushroom-name {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 5px;
+      color: #1f3f2e;
+    }
+
+    .mushroom-latin {
+      font-size: 12px;
+      color: #6b7a86;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .mushroom-info {
+      font-size: 13px;
+      color: #4a5a6a;
+      margin-bottom: 8px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge.edible {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge.toxic {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .badge.inedible {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px;
+    }
+
+    .stat-box {
+      background: var(--light);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .map-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .map-controls button {
+      width: 56px;
+      height: 56px;
+      border: none;
+      background: white;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .map-controls button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 46px rgba(0,0,0,0.16);
+      background: #f6fbf7;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 45%;
+        z-index: 500;
+        border-left: none;
+        border-top: 1px solid #ddd;
+        border-radius: 12px 12px 0 0;
+      }
+
+      #map {
+        height: 55vh;
+      }
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- MAP SECTION -->
+    <div class="map-wrapper">
+      <div class="map-toolbar">
+        <div class="search-box">
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search mushroom species..."
+            autocomplete="off"
+          >
+          <button class="search-btn">Search</button>
+        </div>
+        <div class="filters-row">
+          <button class="filter-btn active" data-filter="all">All Species</button>
+          <button class="filter-btn" data-filter="edible">🟢 Edible</button>
+          <button class="filter-btn" data-filter="toxic">🔴 Toxic</button>
+          <button class="filter-btn" data-filter="inedible">🟡 Inedible</button>
+          <button class="filter-btn" data-filter="season">📅 In Season</button>
+          <button class="filter-btn" data-filter="north">🌲 North slopes</button>
+          <button class="filter-btn" data-filter="woodland">🌳 Woodlands</button>
+        </div>
+      </div>
+      <div id="map"></div>
+      <div class="map-controls">
+        <button title="Zoom in">➕</button>
+        <button title="Zoom out">➖</button>
+        <button title="My location">📍</button>
+        <button title="Refresh mushroom zones">🔥</button>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">🍄 Mushroom Spot</div>
+      
+      <div class="sidebar-tabs">
+        <button class="active" data-tab="species">Species</button>
+        <button data-tab="finds">Finds</button>
+        <button data-tab="weather">Weather</button>
+        <button data-tab="myspots">My Spots</button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- SPECIES TAB -->
+        <div id="species-tab" class="tab-content active">
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-number" id="total-species">10</div>
+              <div class="stat-label">Species</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="total-finds">5</div>
+              <div class="stat-label">Community Finds</div>
+            </div>
+          </div>
+          <div id="species-list"></div>
+        </div>
+
+        <!-- FINDS TAB -->
+        <div id="finds-tab" class="tab-content">
+          <div id="finds-list"></div>
+        </div>
+
+        <!-- WEATHER TAB -->
+        <div id="weather-tab" class="tab-content">
+          <div id="weather-summary" style="margin-bottom: 12px;"></div>
+          <div id="weather-info"></div>
+          <div id="weather-estimate" style="margin-top: 14px;"></div>
+        </div>
+
+        <!-- MY SPOTS TAB -->
+        <div id="myspots-tab" class="tab-content">
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px;">Add New Spot</label>
+            <input id="spot-name" type="text" placeholder="Species" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; font-size: 13px;">
+            <input id="spot-notes" type="text" placeholder="Notes" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; font-size: 13px;">
+            <button id="add-spot-btn" style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">Save Location</button>
+          </div>
+          <div id="myspots-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ============ DATA ============
+    const MUSHROOM_SPECIES = [
+      { name: "King Bolete", latin: "Boletus edulis", edibility: "edible", season: [6, 7, 8, 9, 10], habitat: "Conifer forests", months: "Jun-Oct", tempMin: 10, tempMax: 22, humidityMin: 70, dewpointGapMax: 3, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Boletus_edulis_2_crop.JPG/320px-Boletus_edulis_2_crop.JPG", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Conifer_forest_Bashkiria_July_2011.jpg/320px-Conifer_forest_Bashkiria_July_2011.jpg" },
+      { name: "Chanterelle", latin: "Cantharellus cibarius", edibility: "edible", season: [7, 8, 9], habitat: "Mixed woods", months: "Jul-Sep", tempMin: 8, tempMax: 20, humidityMin: 68, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cantharellus_cibarius_01.jpg/320px-Cantharellus_cibarius_01.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Wald_%28Schwaebisch_Hall%29.jpg/320px-Wald_%28Schwaebisch_Hall%29.jpg" },
+      { name: "Morel", latin: "Morchella species", edibility: "edible", season: [4, 5], habitat: "Ash trees", months: "Apr-May", tempMin: 8, tempMax: 18, humidityMin: 60, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Morchella_elata.jpg/320px-Morchella_elata.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Fraxinus_excelsior_04.JPG/320px-Fraxinus_excelsior_04.JPG" },
+      { name: "Oyster Mushroom", latin: "Pleurotus species", edibility: "edible", season: [4, 5, 9, 10, 11], habitat: "Dead trees", months: "Apr-May, Sep-Nov", tempMin: 10, tempMax: 22, humidityMin: 70, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Blue_Oyster_Mushroom_Pleurotus_ostreatus.jpg/320px-Blue_Oyster_Mushroom_Pleurotus_ostreatus.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Dead_tree_%28photograph%29.jpg/320px-Dead_tree_%28photograph%29.jpg" },
+      { name: "Puffball", latin: "Lycoperdon species", edibility: "edible", season: [8, 9, 10], habitat: "Grassland", months: "Aug-Oct", tempMin: 10, tempMax: 24, humidityMin: 65, dewpointGapMax: 5, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Lycoperdon_pyriforme_031109.jpg/320px-Lycoperdon_pyriforme_031109.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Grassland_in_Europe_4.jpg/320px-Grassland_in_Europe_4.jpg" },
+      { name: "Hedgehog", latin: "Hydnum species", edibility: "edible", season: [8, 9, 10, 11], habitat: "Pine forests", months: "Aug-Nov", tempMin: 8, tempMax: 18, humidityMin: 70, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Hydnum_repandum.jpg/320px-Hydnum_repandum.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Pinetree.jpg/320px-Pinetree.jpg" },
+      { name: "Death Cap", latin: "Amanita phalloides", edibility: "toxic", season: [8, 9, 10], habitat: "Oak trees", months: "Aug-Oct", tempMin: 10, tempMax: 20, humidityMin: 70, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Amanita_phalloides_3.jpg/320px-Amanita_phalloides_3.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Oak_tree_%28Quercus_robur%29.jpg/320px-Oak_tree_%28Quercus_robur%29.jpg" },
+      { name: "Destroying Angels", latin: "Amanita species", edibility: "toxic", season: [7, 8, 9], habitat: "Various", months: "Jul-Sep", tempMin: 10, tempMax: 20, humidityMin: 68, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Amanita_verna.jpg/320px-Amanita_verna.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Mixed_forest.JPG/320px-Mixed_forest.JPG" },
+      { name: "False Chanterelle", latin: "Hygrophoropsis aurantiaca", edibility: "inedible", season: [8, 9, 10], habitat: "Mixed woods", months: "Aug-Oct", tempMin: 10, tempMax: 20, humidityMin: 65, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Hygrophoropsis_aurantiaca.jpg/320px-Hygrophoropsis_aurantiaca.jpg", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Wald_%28Schwaebisch_Hall%29.jpg/320px-Wald_%28Schwaebisch_Hall%29.jpg" },
+      { name: "Shaggy Mane", latin: "Coprinus comatus", edibility: "edible", season: [9, 10], habitat: "Lawns", months: "Sep-Oct", tempMin: 10, tempMax: 18, humidityMin: 65, dewpointGapMax: 4, likesPrecip: true, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Coprinus_comatus_02.JPG/320px-Coprinus_comatus_02.JPG", image2: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Lawn_in_garden.jpg/320px-Lawn_in_garden.jpg" }
+    ];
+
+    const SAMPLE_FINDS = [
+      { species: "King Bolete", lat: 37.793, lng: -107.858, user: "John D.", date: "2026-07-15", quantity: 12 },
+      { species: "Chanterelle", lat: 37.487, lng: -108.482, user: "Maria L.", date: "2026-07-14", quantity: 8 },
+      { species: "Oyster Mushroom", lat: 37.881, lng: -107.924, user: "Alex P.", date: "2026-07-10", quantity: 5 },
+      { species: "Puffball", lat: 37.349, lng: -108.655, user: "Sam K.", date: "2026-07-12", quantity: 3 },
+      { species: "Hedgehog", lat: 37.242, lng: -108.489, user: "Chris M.", date: "2026-07-13", quantity: 6 }
+    ];
+
+    const DATA_NETWORK_SOURCES = [
+      { name: 'USDA NRCS SNOTEL', category: 'High-Altitude Soil', coords: [39.310, -106.820], url: 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?report=Colorado&format=SNOTEL+Snowpack+Update+Report', description: 'Snow telemetry sites with soil moisture and soil temperature at multiple depths.' },
+      { name: 'USDA NRCS SCAN', category: 'Soil Climate', coords: [39.100, -105.820], url: 'https://www.nrcs.usda.gov/', description: 'Low-elevation soil climate and moisture observations for agricultural valleys.' },
+      { name: 'CoAgMET', category: 'Agricultural Network', coords: [40.570, -105.080], url: 'https://coagmet.colostate.edu/', description: 'Advanced Colorado agricultural meteorological stations with ET and solar intensity reports.' },
+      { name: 'CoCoRaHS', category: 'Citizen Science', coords: [39.740, -105.020], url: 'https://www.cocorahs.org/Content.aspx?page=app-guide-mydata', description: 'Volunteer rain, hail, and snow gauges providing hyper-local precipitation coverage.' },
+      { name: 'NOAA MRMS', category: 'Gridded Weather', coords: [39.000, -105.500], url: 'https://www.nssl.noaa.gov/projects/mrms/', description: 'Multi-radar multi-sensor gridded precipitation fields for Colorado.' },
+      { name: 'PRISM Climate', category: 'Climate Model', coords: [38.800, -104.900], url: 'https://prism.oregonstate.edu/', description: 'High-resolution gridded climate surfaces for temperature and moisture.' },
+      { name: 'NASA SMAP', category: 'Satellite Soil Moisture', coords: [39.600, -105.000], url: 'https://smap.jpl.nasa.gov/', description: 'Soil moisture active passive satellite observations at regional scale.' },
+      { name: 'NOAA HRRR', category: 'Rapid Refresh', coords: [39.000, -105.500], url: 'https://rapidrefresh.noaa.gov/hrrr/', description: 'High-resolution hourly atmospheric model for near-surface humidity and rainfall.' },
+      { name: 'iNaturalist', category: 'Biological Data', coords: [39.200, -105.600], url: 'https://www.inaturalist.org/', description: 'Crowdsourced fungal observations with georeferenced fruiting locations.' },
+      { name: 'Mushroom Observer', category: 'Community Registry', coords: [39.300, -106.000], url: 'https://mushroomobserver.org/', description: 'Community database of mycological observations and substrate notes.' },
+      { name: 'USDA FIA', category: 'Forest Inventory', coords: [39.400, -105.800], url: 'https://research.fs.usda.gov/programs/fia', description: 'Forest inventory data for host tree distributions and forest type mapping.' },
+      { name: 'USGS NLCD', category: 'Land Cover', coords: [40.000, -105.000], url: 'https://www.usgs.gov/centers/eros/science/national-land-cover-database', description: 'National land cover dataset for forest and scrubland classification.' },
+      { name: 'USGS 3DEP', category: 'Topography', coords: [38.900, -106.100], url: 'https://www.usgs.gov/3d-elevation-program', description: 'High-resolution digital elevation models for terrain aspect and slope analysis.' },
+      { name: 'USGS NHD', category: 'Hydrography', coords: [39.500, -105.300], url: 'https://www.usgs.gov/national-hydrography/national-hydrography-dataset', description: 'Hydrography dataset for streams, creeks, and riparian zone mapping.' },
+      { name: 'GeoMAC / WFIGS', category: 'Fire Disturbance', coords: [39.400, -105.900], url: 'https://data-nifc.opendata.arcgis.com/', description: 'Historical fire perimeters and burn scar data to detect pyrophilous mushroom zones.' },
+      { name: 'USDA NRCS SSURGO', category: 'Soil Survey', coords: [39.100, -105.400], url: 'https://www.nrcs.usda.gov/wps/portal/nrcs/site/national/home/', description: 'Soil type, drainage, and organic matter maps for site-level habitat prediction.' }
+    ];
+
+    // ============ STATE ============
+    let mySpots = JSON.parse(localStorage.getItem('mushroom-spots') || '[]');
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let currentWeather = null;
+    const currentMonth = new Date().getMonth() + 1;
+
+    // ============ MAP SETUP ============
+    const map = L.map('map').setView([37.64, -108.12], 8);
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap'
+    });
+    const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: '© OpenTopoMap contributors'
+    });
+    const hillshadeLayer = L.tileLayer('https://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png', {
+      opacity: 0.45,
+      attribution: 'Hillshade overlay'
+    });
+    const probabilityLayer = L.layerGroup().addTo(map);
+    const communitiesLayer = L.layerGroup().addTo(map);
+    const mySpotLayer = L.layerGroup().addTo(map);
+    const stationLayer = L.layerGroup().addTo(map);
+    const dataNetworkLayer = L.layerGroup().addTo(map);
+
+    const baseMaps = {
+      'OpenStreetMap': osmLayer,
+      'Topographic': topoLayer
+    };
+
+    const overlayMaps = {
+      'Hillshade': hillshadeLayer,
+      'Mushroom probability': probabilityLayer,
+      'Weather stations': stationLayer,
+      'Network sources': dataNetworkLayer
+    };
+
+    osmLayer.addTo(map);
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+    // ============ HELPERS ============
+    function getSpeciesColor(edibility) {
+      if (edibility === 'edible') return '#2ecc71';
+      if (edibility === 'toxic') return '#e74c3c';
+      return '#f39c12';
+    }
+
+    function isInSeason(species) {
+      return species.season.includes(currentMonth);
+    }
+
+    function matchesFilter(species) {
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'edible') return species.edibility === 'edible';
+      if (activeFilter === 'toxic') return species.edibility === 'toxic';
+      if (activeFilter === 'inedible') return species.edibility === 'inedible';
+      if (activeFilter === 'season') return isInSeason(species);
+      if (activeFilter === 'north') {
+        const aspect = species.preferredAspect || 'all';
+        return aspect === 'north' || aspect === 'all';
+      }
+      if (activeFilter === 'woodland') {
+        const habitatType = species.habitatType || 'mixed';
+        return ['forest', 'woodland', 'deadwood', 'mixed'].includes(habitatType);
+      }
+      return true;
+    }
+
+    function matchesSearch(species) {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return species.name.toLowerCase().includes(q) || 
+             species.latin.toLowerCase().includes(q) ||
+             species.habitat.toLowerCase().includes(q);
+    }
+
+    // ============ RENDER FUNCTIONS ============
+    function renderSpecies() {
+      const list = document.getElementById('species-list');
+      list.innerHTML = '';
+
+      const filtered = MUSHROOM_SPECIES.filter(s => matchesFilter(s) && matchesSearch(s));
+      document.getElementById('total-species').textContent = filtered.length;
+      document.getElementById('total-finds').textContent = SAMPLE_FINDS.length;
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="no-results">No species found</div>';
+        return;
+      }
+
+      filtered.forEach(species => {
+        const card = document.createElement('div');
+        card.className = 'mushroom-card show';
+        const badge = `<div class="badge ${species.edibility}">${species.edibility.toUpperCase()}</div>`;
+        const seasonBadge = isInSeason(species) ? '<div class="badge" style="background: #2ecc71; color: white;">IN SEASON 🔥</div>' : '';
+
+        card.innerHTML = `
+          <div class="mushroom-image-row">
+            <img src="${species.image}" alt="${species.name}">
+            <img src="${species.image2}" alt="${species.name} habitat">
+          </div>
+          <div class="mushroom-name">${species.name}</div>
+          <div class="mushroom-latin">${species.latin}</div>
+          <div class="mushroom-info">🌍 ${species.habitat}</div>
+          <div class="mushroom-info">📅 ${species.months}</div>
+          <div class="mushroom-info">📈 ${species.preferredAspect === 'all' ? 'Any aspect' : species.preferredAspect + ' facing'} · ${species.slopePref} slope</div>
+          <div class="mushroom-info">🏔️ ${species.elevationRange[0]}–${species.elevationRange[1]}m · ${species.substrate}</div>
+          <div class="badges">${badge}${seasonBadge}</div>
+        `;
+
+        card.addEventListener('click', () => {
+          const find = SAMPLE_FINDS.find(f => f.species === species.name);
+          if (find) {
+            map.flyTo([find.lat, find.lng], 12);
+          }
+        });
+
+        list.appendChild(card);
+      });
+    }
+
+    function renderFinds() {
+      const list = document.getElementById('finds-list');
+      list.innerHTML = '';
+
+      SAMPLE_FINDS.forEach(find => {
+        const species = MUSHROOM_SPECIES.find(s => s.name === find.species);
+        if (!species) return;
+
+        const card = document.createElement('div');
+        card.className = 'mushroom-card show';
+        const findImageHtml = species.image ? `
+          <div class="mushroom-image-row">
+            <img src="${species.image}" alt="${species.name}">
+            <img src="${species.image2}" alt="${species.name} habitat">
+          </div>
+        ` : '';
+        card.innerHTML = `${findImageHtml}
+          <div class="mushroom-name">${find.species}</div>
+          <div class="mushroom-info">👤 ${find.user}</div>
+          <div class="mushroom-info">📍 Found ${find.quantity}</div>
+          <div class="mushroom-info">📅 ${find.date}</div>
+          <div class="badges"><div class="badge ${species.edibility}">${species.edibility.toUpperCase()}</div></div>
+        `;
+
+        card.addEventListener('click', () => {
+          map.flyTo([find.lat, find.lng], 13);
+        });
+
+        list.appendChild(card);
+      });
+    }
+
+    function renderMySpots() {
+      const list = document.getElementById('myspots-list');
+      list.innerHTML = '';
+
+      if (mySpots.length === 0) {
+        list.innerHTML = '<div class="no-results">No spots saved yet. Add your first find!</div>';
+        return;
+      }
+
+      mySpots.forEach((spot, idx) => {
+        const card = document.createElement('div');
+        card.className = 'mushroom-card show';
+        const spotSpecies = MUSHROOM_SPECIES.find(s => s.name === spot.species);
+        const spotImage = spotSpecies ? `
+          <div class="mushroom-image-row">
+            <img src="${spotSpecies.image}" alt="${spotSpecies.name}">
+            <img src="${spotSpecies.image2}" alt="${spotSpecies.name} habitat">
+          </div>
+        ` : '';
+        card.innerHTML = `${spotImage}
+          <div class="mushroom-name">${spot.species}</div>
+          <div class="mushroom-info">${spot.notes || 'No notes'}</div>
+          <div class="mushroom-info">📍 ${spot.lat.toFixed(3)}, ${spot.lng.toFixed(3)}</div>
+          <button onclick="deleteSpot(${idx})" style="width: 100%; margin-top: 8px; padding: 6px; background: #f8d7da; border: none; border-radius: 6px; cursor: pointer; color: #721c24; font-weight: 600; font-size: 12px;">Delete</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    window.deleteSpot = function(idx) {
+      mySpots.splice(idx, 1);
+      localStorage.setItem('mushroom-spots', JSON.stringify(mySpots));
+      renderMySpots();
+      updateMapSpots();
+    };
+
+    function updateMapSpots() {
+      mySpotLayer.clearLayers();
+      mySpots.forEach(spot => {
+        L.circleMarker([spot.lat, spot.lng], {
+          radius: 10,
+          fillColor: '#3498db',
+          color: '#fff',
+          weight: 3,
+          fillOpacity: 0.9
+        }).addTo(mySpotLayer).bindPopup(`
+          <strong>My Spot: ${spot.species}</strong><br>
+          ${spot.notes || 'No notes'}<br>
+          <small>${spot.date}</small>
+        `);
+      });
+    }
+
+    function renderCommunityFinds() {
+      communitiesLayer.clearLayers();
+      SAMPLE_FINDS.forEach(find => {
+        const species = MUSHROOM_SPECIES.find(s => s.name === find.species);
+        const color = getSpeciesColor(species.edibility);
+
+        L.circleMarker([find.lat, find.lng], {
+          radius: 10,
+          fillColor: color,
+          color: '#fff',
+          weight: 3,
+          fillOpacity: 0.8
+        }).addTo(communitiesLayer).bindPopup(`
+          <strong>${find.species}</strong><br>
+          ${find.quantity} found by ${find.user}<br>
+          ${find.date}
+        `);
+      });
+    }
+
+    async function renderStationLayer(stationUrls) {
+      stationLayer.clearLayers();
+      if (!Array.isArray(stationUrls) || stationUrls.length === 0) return;
+
+      const stationResponses = await Promise.all(stationUrls.slice(0, 12).map(async (url) => {
+        try {
+          const response = await fetch(url, { headers: { 'User-Agent': 'MushroomSpotApp/1.0' } });
+          if (!response.ok) return null;
+          return response.json();
+        } catch (error) {
+          return null;
+        }
+      }));
+
+      stationResponses.filter(Boolean).forEach(station => {
+        const coords = station.geometry?.coordinates;
+        if (!coords || coords.length < 2) return;
+        const [lng, lat] = coords;
+        const name = station.properties?.name || station.properties?.stationIdentifier || 'Weather station';
+        const type = station.properties?.stationType || station.properties?.type || 'NOAA observation station';
+        const id = station.properties?.stationIdentifier || station.properties?.stationId || 'N/A';
+
+        L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: '#1abc9c',
+          color: '#0f3d2e',
+          weight: 1,
+          fillOpacity: 0.9
+        }).addTo(stationLayer).bindPopup(`
+          <strong>${name}</strong><br>
+          ${type}<br>
+          ID: ${id}
+        `);
+      });
+    }
+
+    function renderDataNetworkLayer() {
+      dataNetworkLayer.clearLayers();
+      DATA_NETWORK_SOURCES.forEach(source => {
+        const marker = L.circleMarker(source.coords, {
+          radius: 10,
+          fillColor: source.category.includes('Soil') ? '#8e44ad' : source.category.includes('Gridded') ? '#2980b9' : source.category.includes('Biological') ? '#27ae60' : '#d35400',
+          color: '#222',
+          weight: 1,
+          fillOpacity: 0.85
+        }).addTo(dataNetworkLayer);
+        marker.bindPopup(`
+          <strong>${source.name}</strong><br>
+          <em>${source.category}</em><br>
+          ${source.description}<br>
+          <a href="${source.url}" target="_blank">Source info</a>
+        `);
+      });
+    }
+
+    // ============ EVENT LISTENERS ============
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderSpecies();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        renderSpecies();
+        renderCommunityFinds();
+      });
+    });
+
+    document.querySelectorAll('.sidebar-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-tabs button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const tab = btn.dataset.tab;
+        if (tab === 'species') {
+          renderSpecies();
+          document.getElementById('species-tab').classList.add('active');
+        } else if (tab === 'finds') {
+          renderFinds();
+          document.getElementById('finds-tab').classList.add('active');
+        } else if (tab === 'weather') {
+          renderWeather();
+          document.getElementById('weather-tab').classList.add('active');
+        } else if (tab === 'myspots') {
+          renderMySpots();
+          document.getElementById('myspots-tab').classList.add('active');
+        }
+      });
+    });
+
+    document.querySelector('.search-btn').addEventListener('click', () => {
+      searchQuery = document.getElementById('search-input').value;
+      renderSpecies();
+      renderCommunityFinds();
+    });
+
+    document.getElementById('search-input').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        searchQuery = event.target.value;
+        renderSpecies();
+        renderCommunityFinds();
+      }
+    });
+
+    document.getElementById('add-spot-btn').addEventListener('click', () => {
+      const species = document.getElementById('spot-name').value;
+      const notes = document.getElementById('spot-notes').value;
+      
+      if (!species) {
+        alert('Please enter a species name');
+        return;
+      }
+
+      const coords = map.getCenter();
+      mySpots.push({
+        species,
+        notes,
+        lat: coords.lat,
+        lng: coords.lng,
+        date: new Date().toLocaleDateString()
+      });
+
+      localStorage.setItem('mushroom-spots', JSON.stringify(mySpots));
+      document.getElementById('spot-name').value = '';
+      document.getElementById('spot-notes').value = '';
+      
+      renderMySpots();
+      updateMapSpots();
+      alert(`Spot saved at ${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`);
+    });
+
+    async function fetchWeather() {
+      const weatherInfo = document.getElementById('weather-info');
+      weatherInfo.innerHTML = '<div class="no-results">Loading weather station data...</div>';
+      const center = map.getCenter();
+      const pointUrl = `https://api.weather.gov/points/${center.lat},${center.lng}`;
+      try {
+        const pointRes = await fetch(pointUrl, { headers: { 'User-Agent': 'MushroomSpotApp/1.0', 'Accept': 'application/ld+json' } });
+        if (!pointRes.ok) throw new Error('Point lookup failed');
+        const pointData = await pointRes.json();
+        const stationUrl = pointData.properties.observationStations?.[0];
+        const forecastUrl = pointData.properties.forecast;
+        const radarUrl = pointData.properties.radarStation;
+
+        if (!stationUrl) {
+          weatherInfo.innerHTML = '<div class="no-results">No nearby station found for this location.</div>';
+          return;
+        }
+
+        const [stationRes, forecastRes] = await Promise.all([
+          fetch(stationUrl, { headers: { 'User-Agent': 'MushroomSpotApp/1.0' } }),
+          fetch(`${stationUrl}/observations/latest`, { headers: { 'User-Agent': 'MushroomSpotApp/1.0' } })
+        ]);
+
+        if (!stationRes.ok || !forecastRes.ok) throw new Error('Station or observation fetch failed');
+
+        const stationData = await stationRes.json();
+        const obsData = await forecastRes.json();
+        const stationList = pointData.properties.observationStations || [];
+        renderStationLayer(stationList);
+
+        const temp = obsData.properties.temperature?.value;
+        const dewpoint = obsData.properties.dewpoint?.value;
+        const relativeHumidity = obsData.properties.relativeHumidity?.value;
+        const windSpeed = obsData.properties.windSpeed?.value;
+        const windDirection = obsData.properties.windDirection?.value;
+        const precip = obsData.properties.presentWeather?.length ? obsData.properties.presentWeather[0].weather : [];
+        const textDescription = obsData.properties.textDescription;
+
+        currentWeather = { temp, dewpoint, relativeHumidity, precip, textDescription };
+        const estimate = estimateMushroomChance(currentWeather);
+        const speciesSuitabilities = MUSHROOM_SPECIES.map(species => ({
+          species,
+          suitability: estimateSpeciesSuitability(species, currentWeather)
+        }));
+
+        const sortedByChance = speciesSuitabilities.slice().sort((a, b) => b.suitability.score - a.suitability.score);
+        const topMatch = sortedByChance[0];
+        const summaryHtml = `
+          <div class="weather-card">
+            <div class="weather-row"><strong>Best match</strong><span class="weather-status" style="background:${topMatch.suitability.color};">${topMatch.species.name}</span></div>
+            <div style="font-size:13px;color:${topMatch.suitability.color};">${topMatch.suitability.label} — ${topMatch.suitability.message}</div>
+          </div>
+        `;
+
+        const speciesListHtml = speciesSuitabilities.map(item => `
+            <div class="weather-card">
+              <div class="weather-row"><strong>${item.species.name}</strong><span class="weather-status" style="background:${item.suitability.color};">${item.suitability.label}</span></div>
+              <div style="font-size:13px;color:${item.suitability.color};">${item.suitability.message}</div>
+            </div>
+          `).join('');
+
+        document.getElementById('weather-summary').innerHTML = summaryHtml;
+        weatherInfo.innerHTML = `
+          <div class="weather-card">
+            <div class="weather-row"><strong>Station</strong><span>${stationData.properties.name}</span></div>
+            <div class="weather-row"><strong>Last update</strong><span>${new Date(obsData.properties.timestamp).toLocaleString()}</span></div>
+            <div class="weather-row"><strong>Temp</strong><span>${temp !== null ? temp.toFixed(1) + '°C' : 'N/A'}</span></div>
+            <div class="weather-row"><strong>Dew Point</strong><span>${dewpoint !== null ? dewpoint.toFixed(1) + '°C' : 'N/A'}</span></div>
+            <div class="weather-row"><strong>Humidity</strong><span>${relativeHumidity !== null ? relativeHumidity.toFixed(0) + '%': 'N/A'}</span></div>
+            <div class="weather-row"><strong>Wind</strong><span>${windSpeed !== null ? windSpeed.toFixed(1) + ' m/s' : 'N/A'} ${windDirection !== null ? windDirection + '°' : ''}</span></div>
+            <div class="weather-row"><strong>Conditions</strong><span>${textDescription || 'Unknown'}</span></div>
+          </div>
+          ${speciesListHtml}
+        `;
+
+        document.getElementById('weather-estimate').innerHTML = '';
+        renderProbabilityOverlay();
+      } catch (error) {
+        weatherInfo.innerHTML = `<div class="no-results">Unable to fetch NOAA weather data. The app uses local sample finds and estimated weather only.</div>`;
+        document.getElementById('weather-estimate').innerHTML = '';
+      }
+    }
+
+    function getColorFromScore(score) {
+      if (score >= 80) return '#27ae60';
+      if (score >= 60) return '#f1c40f';
+      if (score >= 40) return '#e67e22';
+      return '#c0392b';
+    }
+
+    function getAspectName(angle) {
+      if (angle === null) return 'unknown';
+      if (angle <= 45 || angle >= 315) return 'north';
+      if (angle <= 135) return 'east';
+      if (angle <= 225) return 'south';
+      return 'west';
+    }
+
+    function buildGridPoints(bounds, size = 5) {
+      const points = [];
+      const latStep = (bounds.getNorth() - bounds.getSouth()) / (size - 1);
+      const lngStep = (bounds.getEast() - bounds.getWest()) / (size - 1);
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          points.push({
+            row,
+            col,
+            lat: bounds.getSouth() + latStep * row,
+            lng: bounds.getWest() + lngStep * col
+          });
+        }
+      }
+      return points;
+    }
+
+    async function fetchElevationGrid(bounds, size = 5) {
+      const points = buildGridPoints(bounds, size);
+      const locations = points.map(p => `${p.lat},${p.lng}`).join('|');
+      const url = `https://api.open-elevation.com/api/v1/lookup?locations=${locations}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Elevation lookup failed');
+      const data = await response.json();
+      return data.results.map((result, index) => ({
+        ...points[index],
+        elevation: result.elevation
+      }));
+    }
+
+    function computeSlopeAspect(grid, row, col, size) {
+      const idx = row * size + col;
+      const point = grid[idx];
+      const left = col > 0 ? grid[row * size + (col - 1)] : null;
+      const right = col < size - 1 ? grid[row * size + (col + 1)] : null;
+      const top = row > 0 ? grid[(row - 1) * size + col] : null;
+      const bottom = row < size - 1 ? grid[(row + 1) * size + col] : null;
+      if (!left || !right || !top || !bottom) return { slope: null, aspect: null };
+      const latRad = point.lat * Math.PI / 180;
+      const dx = (right.elevation - left.elevation) / ((right.lng - left.lng) * 111320 * Math.cos(latRad));
+      const dy = (bottom.elevation - top.elevation) / ((bottom.lat - top.lat) * 110540);
+      const slope = Math.atan(Math.sqrt(dx * dx + dy * dy)) * 180 / Math.PI;
+      let aspect = Math.atan2(dy, -dx) * 180 / Math.PI;
+      if (aspect < 0) aspect += 360;
+      return { slope: Math.round(slope), aspect: Math.round(aspect) };
+    }
+
+    function estimateSpeciesSuitability(species, weather, terrain = {}) {
+      let score = 50;
+      if (weather.temp !== null && weather.temp !== undefined) {
+        if (weather.temp < species.tempMin) score -= 18;
+        else if (weather.temp > species.tempMax) score -= 18;
+        else score += 12;
+      }
+
+      if (weather.relativeHumidity !== null && weather.relativeHumidity !== undefined) {
+        if (weather.relativeHumidity < species.humidityMin) score -= 14;
+        else score += 10;
+      }
+
+      if (weather.dewpoint !== null && weather.dewpoint !== undefined && weather.temp !== null && weather.temp !== undefined) {
+        const diff = weather.temp - weather.dewpoint;
+        if (diff <= species.dewpointGapMax) score += 12;
+        else score -= 10;
+      }
+
+      const rainMatch = /rain|drizzle|spray|showers|tstorm/i.test(weather.textDescription || '');
+      if (species.likesPrecip && rainMatch) score += 10;
+      if (!species.likesPrecip && rainMatch) score -= 5;
+
+      if (species.elevationRange && terrain.elevation !== null && terrain.elevation !== undefined) {
+        if (terrain.elevation >= species.elevationRange[0] && terrain.elevation <= species.elevationRange[1]) score += 8;
+        else score -= 7;
+      }
+
+      if (terrain.aspect !== null && terrain.aspect !== undefined) {
+        const aspectName = getAspectName(terrain.aspect);
+        if (species.preferredAspect === aspectName || species.preferredAspect === 'all') score += 6;
+        else if (species.preferredAspect !== 'all') score -= 3;
+      }
+
+      if (terrain.slope !== null && terrain.slope !== undefined) {
+        if (species.slopePref === 'steep' && terrain.slope >= 12) score += 6;
+        if (species.slopePref === 'gentle' && terrain.slope <= 8) score += 6;
+      }
+
+      const inSeason = species.season.includes(currentMonth);
+      if (inSeason) score += 8;
+      else score -= 10;
+
+      const finalScore = Math.max(0, Math.min(100, Math.round(score)));
+      const color = getColorFromScore(finalScore);
+      return {
+        score: finalScore,
+        label: `${finalScore}% chance`,
+        message: `${inSeason ? 'In season' : 'Out of season'} · ${terrain.aspect ? getAspectName(terrain.aspect) + ' slope' : 'Terrain unknown'}`,
+        color
+      };
+    }
+
+    function estimateMushroomChance({ temp, dewpoint, relativeHumidity, precip, textDescription }) {
+      let chance = 50;
+      if (temp !== null && temp !== undefined) {
+        if (temp < 0) chance -= 20;
+        else if (temp <= 5) chance -= 10;
+        else if (temp <= 12) chance += 8;
+        else if (temp <= 18) chance += 12;
+        else if (temp <= 23) chance += 6;
+        else if (temp <= 28) chance -= 5;
+        else chance -= 20;
+      }
+      if (relativeHumidity !== null && relativeHumidity !== undefined) {
+        const humidity = Math.max(0, Math.min(100, relativeHumidity));
+        chance += ((humidity - 60) / 40) * 20;
+      }
+      if (dewpoint !== null && dewpoint !== undefined && temp !== null && temp !== undefined) {
+        const diff = temp - dewpoint;
+        if (diff <= 1) chance += 18;
+        else if (diff <= 3) chance += 12;
+        else if (diff <= 5) chance += 6;
+        else chance -= 5;
+      }
+      const rainMatch = /rain|drizzle|spray|showers|tstorm/i.test(textDescription || '');
+      if (rainMatch) chance += 12;
+      else if (/cloudy|overcast|fog|mist|haze/i.test(textDescription || '')) chance += 6;
+      else chance -= 5;
+      const finalChance = Math.max(5, Math.min(95, Math.round(chance)));
+      const color = getColorFromScore(finalChance);
+      return {
+        label: `${finalChance}% chance`,
+        message: `Estimated ${finalChance}% chance of mushroom growth conditions based on current mountain weather.`,
+        color
+      };
+    }
+
+    function renderWeather() {
+      document.getElementById('weather-summary').innerHTML = '';
+      document.getElementById('weather-info').innerHTML = '';
+      document.getElementById('weather-estimate').innerHTML = '';
+      fetchWeather();
+    }
+
+    document.querySelectorAll('.map-controls button').forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        if (idx === 0) map.zoomIn();
+        if (idx === 1) map.zoomOut();
+        if (idx === 2) {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+              map.setView([pos.coords.latitude, pos.coords.longitude], 12);
+            });
+          }
+        }
+        if (idx === 3) {
+          if (currentWeather) renderProbabilityOverlay();
+          else renderWeather();
+        }
+      });
+    });
+
+    // ============ INIT ============
+    renderCommunityFinds();
+    renderSpecies();
+    renderDataNetworkLayer();
+    updateMapSpots();
+  </script>
+</body>
+</html>
 
